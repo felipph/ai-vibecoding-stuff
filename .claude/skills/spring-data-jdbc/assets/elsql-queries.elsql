@@ -1,0 +1,241 @@
+-- ============================================================
+-- {{NAME}}Queries.elsql
+-- SQL fragments for the {{NAME}} aggregate / query service.
+-- The query identation matters!
+-- Location: src/main/resources/sql/{{NAME}}Queries.elsql
+--           OR same package as the marker class {{NAME}}Queries.java
+--
+-- Loaded via:
+--   ElSqlBundle.of(ElSqlConfig.POSTGRES, {{NAME}}Queries.class)
+--
+-- Naming conventions:
+--   FindXxx        — SELECT returning a collection
+--   GetXxx         — SELECT returning a single row (expect Optional)
+--   CountXxx       — SELECT COUNT(*) paired with a paginated FindXxx
+--   Search         — Dynamic multi-filter SELECT
+--   CountSearch    — COUNT(*) paired with Search
+--   BulkUpdateXxx  — UPDATE without loading entities
+--   DeleteXxx      — DELETE
+-- ============================================================
+
+
+-- ============================================================
+-- SIMPLE SELECTS
+-- ============================================================
+
+-- :name FindAll
+@NAME(FindAll)
+    SELECT id, code, name, price, status, created_at
+    FROM {{TABLE_NAME}}
+    ORDER BY created_at DESC
+
+-- :name FindAllActive
+@NAME(FindAllActive)
+    SELECT id, code, name, price, status, created_at
+    FROM {{TABLE_NAME}}
+    WHERE status = 'ACTIVE'
+    ORDER BY created_at DESC
+
+-- :name GetById
+@NAME(GetById)
+    SELECT id, code, name, price, status, created_at, updated_at
+    FROM {{TABLE_NAME}}
+    WHERE id = :id
+
+-- :name GetByCode
+@NAME(GetByCode)
+    SELECT id, code, name, price, status, created_at, updated_at
+    FROM {{TABLE_NAME}}
+    WHERE code = :code
+
+-- :name ExistsById
+@NAME(ExistsById)
+    SELECT COUNT(*) FROM {{TABLE_NAME}} WHERE id = :id
+
+-- :name CountByStatus
+@NAME(CountByStatus)
+    SELECT COUNT(*) FROM {{TABLE_NAME}} WHERE status = :status
+
+
+-- ============================================================
+-- SELECT WITH JOIN (cross-aggregate read)
+-- ============================================================
+
+-- :name GetDetailById
+@NAME(GetDetailById)
+    SELECT
+        e.id,
+        e.code,
+        e.name,
+        e.description,
+        e.price,
+        e.status,
+        e.created_at,
+        e.updated_at,
+        c.id   AS category_id,
+        c.name AS category_name
+    FROM {{TABLE_NAME}} e
+    LEFT JOIN categories c ON c.id = e.category_id
+    WHERE e.id = :id
+
+-- :name FindWithStats
+@NAME(FindWithStats)
+    SELECT
+        e.id,
+        e.code,
+        e.name,
+        e.price,
+        e.status,
+        COUNT(r.id)   AS review_count,
+        AVG(r.rating) AS avg_rating
+    FROM {{TABLE_NAME}} e
+    LEFT JOIN reviews r ON r.entity_id = e.id
+    WHERE e.status = 'ACTIVE'
+    GROUP BY e.id, e.code, e.name, e.price, e.status
+    ORDER BY avg_rating DESC NULLS LAST
+
+
+-- ============================================================
+-- DYNAMIC SEARCH  (:where + :and)
+-- ============================================================
+-- All parameters are optional. Pass null to skip a condition.
+-- Always add every key to MapSqlParameterSource even when null.
+
+-- :name Search
+@NAME(Search)
+    SELECT id, code, name, price, status, created_at
+    FROM {{TABLE_NAME}}
+    :where
+      :and(:code, code = :code)
+      :and(:name, name ILIKE :name)
+      :and(:status, status = :status)
+      :and(:minPrice, price >= :minPrice)
+      :and(:maxPrice, price <= :maxPrice)
+      :and(:categoryId, category_id = :categoryId)
+      :and(:fromDate, created_at >= :fromDate)
+      :and(:toDate, created_at <= :toDate)
+    ORDER BY name
+    :offsetfetch(:offset, :fetch)
+
+-- :name CountSearch
+@NAME(CountSearch)
+    SELECT COUNT(*)
+    FROM {{TABLE_NAME}}
+    :where
+      :and(:code, code = :code)
+      :and(:name, name ILIKE :name)
+      :and(:status, status = :status)
+      :and(:minPrice, price >= :minPrice)
+      :and(:maxPrice, price <= :maxPrice)
+      :and(:categoryId, category_id = :categoryId)
+      :and(:fromDate, created_at >= :fromDate)
+      :and(:toDate, created_at <= :toDate)
+
+
+-- ============================================================
+-- PAGINATION (fixed query)
+-- ============================================================
+
+-- :name FindActivePaged
+@NAME(FindActivePaged)
+    SELECT id, code, name, price, status, created_at
+    FROM {{TABLE_NAME}}
+    WHERE status = 'ACTIVE'
+    ORDER BY created_at DESC
+    :offsetfetch(:offset, :fetch)
+
+-- :name CountActive
+@NAME(CountActive)
+    SELECT COUNT(*) FROM {{TABLE_NAME}} WHERE status = 'ACTIVE'
+
+
+-- ============================================================
+-- IN CLAUSE
+-- ============================================================
+-- NamedParameterJdbcTemplate expands List<T> automatically:
+--   params.addValue("ids", List.of(1L, 2L, 3L))
+
+-- :name FindByIds
+@NAME(FindByIds)
+    SELECT id, code, name, price, status
+    FROM {{TABLE_NAME}}
+    WHERE id IN (:ids)
+
+
+-- ============================================================
+-- CONDITIONAL JOIN  (:if / :end)
+-- ============================================================
+
+-- :name FindWithOptionalCategory
+@NAME(FindWithOptionalCategory)
+    SELECT
+        e.id, e.code, e.name, e.price, e.status
+        :if(:includeCategory)
+        , c.name AS category_name
+        :end
+    FROM {{TABLE_NAME}} e
+    :if(:includeCategory)
+    LEFT JOIN categories c ON c.id = e.category_id
+    :end
+    WHERE e.status = 'ACTIVE'
+    ORDER BY e.name
+
+
+-- ============================================================
+-- AGGREGATIONS / REPORTING
+-- ============================================================
+
+-- :name StatsPerCategory
+@NAME(StatsPerCategory)
+    SELECT
+        c.name           AS category_name,
+        COUNT(e.id)      AS item_count,
+        AVG(e.price)     AS avg_price,
+        MIN(e.price)     AS min_price,
+        MAX(e.price)     AS max_price
+    FROM {{TABLE_NAME}} e
+    JOIN categories c ON c.id = e.category_id
+    WHERE e.status = 'ACTIVE'
+    GROUP BY c.id, c.name
+    ORDER BY item_count DESC
+
+
+-- ============================================================
+-- BULK WRITE OPERATIONS
+-- (These bypass entity lifecycle — no @BeforeSave events)
+-- ============================================================
+
+-- :name BulkUpdateStatus
+@NAME(BulkUpdateStatus)
+    UPDATE {{TABLE_NAME}}
+    SET    status     = :toStatus,
+           updated_at = NOW()
+    WHERE  status = :fromStatus
+
+-- :name BulkUpdateStatusByIds
+@NAME(BulkUpdateStatusByIds)
+    UPDATE {{TABLE_NAME}}
+    SET    status     = :status,
+           updated_at = NOW()
+    WHERE  id IN (:ids)
+
+-- :name DeleteByStatus
+@NAME(DeleteByStatus)
+    DELETE FROM {{TABLE_NAME}}
+    WHERE status = :status
+
+
+-- ============================================================
+-- REUSABLE COLUMN FRAGMENT  (:include)
+-- ============================================================
+
+-- :name BaseColumns
+@NAME(BaseColumns)
+    e.id, e.code, e.name, e.price, e.status, e.created_at
+
+-- :name FindActiveWithInclude
+@NAME(FindActiveWithInclude)
+    SELECT :include(BaseColumns)
+    FROM {{TABLE_NAME}} e
+    WHERE e.status = 'ACTIVE'
+    ORDER BY e.created_at DESC
