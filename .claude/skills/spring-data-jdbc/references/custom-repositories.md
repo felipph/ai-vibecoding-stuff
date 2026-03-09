@@ -1,15 +1,40 @@
-# Custom Repositories Reference
+# Custom Repositories with AbstractElSqlRepository
 
 Use custom repositories when the standard `ListCrudRepository` is insufficient:
 - Bulk update/delete without loading entities
-- Dynamic queries via ElSql
-- Batch inserts using `NamedParameterJdbcTemplate`
+- Dynamic queries via ElSql with `:IF`, `:WHERE`, and other conditional tags
+- Batch operations using `NamedParameterJdbcTemplate`
+
+**Recommended approach:** Extend `AbstractElSqlRepository` to eliminate boilerplate and automatically load ElSql bundles.
+
+---
+
+## Quick Start with AbstractElSqlRepository
+
+`AbstractElSqlRepository` is a base class that:
+- Automatically loads ElSql bundles based on package structure
+- Provides `NamedParameterJdbcTemplate` for query execution
+- Offers utility methods `getSql()` and `getSqlDinamico()`
+- Validates `.elsql` file existence with clear error messages
+
+### File Location Convention
+
+The `.elsql` file follows the same package structure as the repository class:
+
+```
+Repository: com.exemplo.repo.ProductRepositoryImpl
+ElSql file: src/main/resources/com/exemplo/repo/ProductRepositoryImpl.elsql
+```
+
+---
 
 ## Structure
 
-1. **Custom interface** — Define the additional methods
-2. **Implementation class** — Named `<Repository>Impl`, wires ElSql + JDBC
+1. **Custom interface** — Defines the additional methods
+2. **Implementation class** — Extends `AbstractElSqlRepository`, implements custom interface
 3. **Main repository** — Extends both `ListCrudRepository` and custom interface
+
+---
 
 ## Full Example
 
@@ -23,43 +48,38 @@ public interface ProductRepositoryCustom {
 }
 ```
 
-### 2. Implementation
+### 2. Implementation (with AbstractElSqlRepository)
 
 ```java
 @Repository
-class ProductRepositoryImpl implements ProductRepositoryCustom {
+class ProductRepositoryImpl extends AbstractElSqlRepository
+                            implements ProductRepositoryCustom {
 
-    private final ElSqlBundle bundle;
-    private final NamedParameterJdbcTemplate jdbc;
-
-    ProductRepositoryImpl(
-            @Qualifier("productElSqlBundle") ElSqlBundle bundle,
-            NamedParameterJdbcTemplate jdbc) {
-        this.bundle = bundle;
-        this.jdbc = jdbc;
+    public ProductRepositoryImpl(DataSource dataSource) {
+        super(dataSource);  // Bundle and template created automatically
     }
 
     @Override
     public List<ProductEntity> search(ProductSearchCriteria criteria) {
-        MapSqlParameterSource params = new MapSqlParameterSource()
+        var params = new MapSqlParameterSource()
             .addValue("name",     criteria.name())
             .addValue("status",   criteria.status() != null ? criteria.status().name() : null)
             .addValue("minPrice", criteria.minPrice())
             .addValue("maxPrice", criteria.maxPrice());
 
-        SqlFragments sql = bundle.getSql("SearchProducts", params);
-        return jdbc.query(sql.getSqlString(), sql.getParameters(), productRowMapper());
+        var sql = getSqlDinamico("SearchProducts", params);
+        return namedJdbc.query(sql.getSqlString(), sql.getParameters(), productRowMapper());
     }
 
     @Override
     @Transactional
     public int bulkUpdateStatus(ProductStatus from, ProductStatus to) {
-        MapSqlParameterSource params = new MapSqlParameterSource()
+        var params = new MapSqlParameterSource()
             .addValue("fromStatus", from.name())
             .addValue("toStatus",   to.name());
 
-        SqlFragments sql = bundle.getSql("BulkUpdateStatus", params);
-        return jdbc.update(sql.getSqlString(), sql.getParameters());
+        var sql = getSqlDinamico("BulkUpdateStatus", params);
+        return namedJdbc.update(sql.getSqlString(), sql.getParameters());
     }
 
     @Override
@@ -73,8 +93,8 @@ class ProductRepositoryImpl implements ProductRepositoryCustom {
                 .addValue("status", p.status().name()))
             .toArray(SqlParameterSource[]::new);
 
-        jdbc.batchUpdate(
-            "INSERT INTO products (code, name, price, status) VALUES (:code, :name, :price, :status)",
+        namedJdbc.batchUpdate(
+            getSql("BulkInsertProducts"),
             batchParams
         );
     }
@@ -102,10 +122,15 @@ public interface ProductRepository
 }
 ```
 
+---
+
 ## The `.elsql` File
+
+Location: `src/main/resources/com/exemplo/repo/ProductRepositoryImpl.elsql`
 
 ```sql
 -- :name SearchProducts
+-- Dynamic search with optional filters
 SELECT id, code, name, price, status, created_at
 FROM products
 :where
@@ -116,17 +141,65 @@ FROM products
 ORDER BY name
 
 -- :name BulkUpdateStatus
+-- Update status for all products matching criteria
 UPDATE products
 SET    status     = :toStatus,
        updated_at = NOW()
 WHERE  status = :fromStatus
 
+-- :name BulkInsertProducts
+-- Simple bulk insert without ElSql dynamic tags
+INSERT INTO products (code, name, price, status)
+VALUES (:code, :name, :price, :status)
+
 -- :name DeleteByStatus
+-- Delete all products with given status
 DELETE FROM products
 WHERE status = :status
 ```
 
-## Batch Update with batchUpdate
+---
+
+## Dynamic Queries with ElSql
+
+`AbstractElSqlRepository.getSqlDinamico()` is perfect for queries with conditional filters:
+
+```java
+public List<ProductEntity> search(ProductSearchCriteria criteria) {
+    var params = new MapSqlParameterSource();
+
+    // Always add parameters — ElSql :IF checks the value, not presence
+    params.addValue("name", criteria.name());
+    params.addValue("status", criteria.status() != null ? criteria.status().name() : null);
+    params.addValue("minPrice", criteria.minPrice());
+    params.addValue("maxPrice", criteria.maxPrice());
+
+    var sql = getSqlDinamico("SearchProducts", params);
+    return namedJdbc.query(sql.getSqlString(), sql.getParameters(), productRowMapper());
+}
+```
+
+**Corresponding `.elsql` file:**
+
+```sql
+-- :name SearchProducts
+SELECT * FROM products
+:where
+  :and(:name, name ILIKE :name)
+  :and(:status, status = :status)
+  :and(:minPrice, price >= :minPrice)
+  :and(:maxPrice, price <= :maxPrice)
+ORDER BY name
+```
+
+**How it works:**
+- `:where` — Adds `WHERE` if any `:and()` conditions match
+- `:and(condition, sql)` — Includes `sql` only if `condition` is not null
+- Even if all parameters are null, `:where` produces valid SQL (no WHERE clause)
+
+---
+
+## Batch Update with `batchUpdate`
 
 ```java
 @Transactional
@@ -137,16 +210,25 @@ public void updatePrices(Map<Long, BigDecimal> idToPrice) {
             .addValue("price", e.getValue()))
         .toArray(SqlParameterSource[]::new);
 
-    jdbc.batchUpdate(
+    namedJdbc.batchUpdate(
         "UPDATE products SET price = :price WHERE id = :id",
         params
     );
 }
 ```
 
+**When to use `batchUpdate`:**
+- Large bulk updates (100+ rows)
+- Better performance than individual `update()` calls
+- Single transaction, one round-trip to database
+
+---
+
 ## Upsert (Insert or Update)
 
-PostgreSQL ON CONFLICT:
+PostgreSQL ON CONFLICT clause:
+
+**`.elsql` file:**
 
 ```sql
 -- :name UpsertProduct
@@ -158,39 +240,81 @@ SET name   = EXCLUDED.name,
     status = EXCLUDED.status
 ```
 
+**Repository method:**
+
 ```java
 @Transactional
 public void upsert(ProductEntity p) {
-    MapSqlParameterSource params = new MapSqlParameterSource()
+    var params = new MapSqlParameterSource()
         .addValue("code",   p.code())
         .addValue("name",   p.name())
         .addValue("price",  p.price())
         .addValue("status", p.status().name());
 
-    SqlFragments sql = bundle.getSql("UpsertProduct", params);
-    jdbc.update(sql.getSqlString(), sql.getParameters());
+    var sql = getSqlDinamico("UpsertProduct", params);
+    namedJdbc.update(sql.getSqlString(), sql.getParameters());
 }
 ```
+
+---
 
 ## Delete with Return Count
 
 ```java
 @Transactional
 public int deleteByStatus(ProductStatus status) {
-    MapSqlParameterSource params = new MapSqlParameterSource("status", status.name());
-    SqlFragments sql = bundle.getSql("DeleteByStatus", params);
-    return jdbc.update(sql.getSqlString(), sql.getParameters());
+    var params = new MapSqlParameterSource("status", status.name());
+    var sql = getSqlDinamico("DeleteByStatus", params);
+    return namedJdbc.update(sql.getSqlString(), sql.getParameters());
 }
 ```
+
+---
+
+## When NOT to Use AbstractElSqlRepository
+
+The base class is ideal for most cases, but consider the manual approach when:
+
+1. **Different SQL dialect** — `AbstractElSqlRepository` uses `POSTGRES` dialect. For MySQL, Oracle, or others, use manual approach with `ElSqlConfig.MYSQL`, `ElSqlConfig.ORACLE`, etc.
+
+2. **Multiple ElSql bundles per repository** — If you need to load queries from multiple `.elsql` files, manual approach gives more control.
+
+3. **Custom dialect switching** — When you need runtime dialect selection based on environment.
+
+4. **No `.elsql` file needed** — For very simple inline SQL without ElSql features, standard `@Query` or `JdbcTemplate` may be sufficient.
+
+**Manual approach example:**
+
+```java
+@Repository
+class ProductRepositoryImpl implements ProductRepositoryCustom {
+
+    private final ElSqlBundle bundle;
+    private final NamedParameterJdbcTemplate jdbc;
+
+    ProductRepositoryImpl(DataSource dataSource) {
+        // MySQL dialect instead of default POSTGRES
+        this.bundle = ElSqlBundle.of(ElSqlConfig.MYSQL, getClass());
+        this.jdbc = new NamedParameterJdbcTemplate(dataSource);
+    }
+
+    // ... methods using bundle.getSql() directly
+}
+```
+
+---
 
 ## Best Practices
 
 1. **Naming:** Implementation must be named `<Repository>Impl` (Spring's convention)
 2. **Transactions:** Add `@Transactional` to write methods in `Impl`. Read methods inherit `readOnly=true` from the service layer
-3. **ElSql for all SQL:** Even simple UPDATE/DELETE should live in the `.elsql` file
+3. **ElSql for all SQL:** Even simple UPDATE/DELETE should live in the `.elsql` file for consistency
 4. **Bulk ops bypass lifecycle:** Bulk UPDATE/DELETE does not trigger Spring Data JDBC events (`@BeforeSave`, etc.)
 5. **Use `batchUpdate` for large inserts:** Never call `save()` in a loop
-6. **Test with `@DataJdbcTest`:** Requires Spring Data JDBC context to test the integrated repository
+6. **Always add parameters:** For `getSqlDinamico()`, always add params even if null. ElSql `:IF` checks the value, not presence
+7. **File location:** Follow the package convention for `.elsql` files to avoid `IllegalArgumentException`
+
+---
 
 ## Testing Custom Repository
 
@@ -225,18 +349,61 @@ class ProductRepositoryImplTest {
 }
 ```
 
-## Context Configuration for Tests
+**No test configuration needed:** `AbstractElSqlRepository` automatically loads the `.elsql` file from the classpath.
 
-The `ElSqlBundle` bean must be available in the test context.
-Provide it via a `@TestConfiguration`:
+---
 
+## Migration from Manual Approach
+
+If you have existing custom repositories using the manual approach:
+
+**Before (manual):**
 ```java
-@TestConfiguration
-static class TestSqlConfig {
-    @Bean
-    @Qualifier("productElSqlBundle")
-    ElSqlBundle productElSqlBundle() {
-        return ElSqlBundle.of(ElSqlConfig.H2, ProductQueries.class);
+@Repository
+class ProductRepositoryImpl implements ProductRepositoryCustom {
+    private final ElSqlBundle bundle;
+    private final NamedParameterJdbcTemplate jdbc;
+
+    ProductRepositoryImpl(
+            @Qualifier("productElSqlBundle") ElSqlBundle bundle,
+            NamedParameterJdbcTemplate jdbc) {
+        this.bundle = bundle;
+        this.jdbc = jdbc;
+    }
+
+    public List<ProductEntity> search(ProductSearchCriteria criteria) {
+        // ... manual bundle.getSql() calls
     }
 }
 ```
+
+**After (with AbstractElSqlRepository):**
+```java
+@Repository
+class ProductRepositoryImpl extends AbstractElSqlRepository
+                            implements ProductRepositoryCustom {
+
+    public ProductRepositoryImpl(DataSource dataSource) {
+        super(dataSource);  // Simpler!
+    }
+
+    public List<ProductEntity> search(ProductSearchCriteria criteria) {
+        // ... getSqlDinamico() calls
+    }
+}
+```
+
+**Benefits:**
+- ✅ Less boilerplate code
+- ✅ No `@Qualifier` needed
+- ✅ Automatic `.elsql` file location
+- ✅ Clear error message if file not found
+
+---
+
+## See Also
+
+- **`assets/abstract-elsql-repository.java`** — Complete base class implementation
+- **SKILL.md** — Main documentation with "Abstract Base Class" section
+- **references/elsql-syntax.md** — Full ElSql tag reference (`:IF`, `:WHERE`, `:AND`, etc.)
+- **references/query-patterns.md** — Fixed and dynamic query patterns

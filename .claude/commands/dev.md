@@ -88,9 +88,14 @@ Repita o ciclo para o próximo mecanismo.
 - Execute `/validate` para a validação final
 - Se tudo passar, execute `/push-story`
 
+### 6. Atualize o INDEX
+
+Sempre atualize o INDEX para manter as tarefas atualizadas!
+
 ## Saída esperada por ciclo
 - Código implementado ✅
 - Build passando ✅
 - Testes passando com ≥ 80% ✅
 - Dev log atualizado ✅
 - Commit realizado via `/commit-task` ✅
+- INDEX atualizado

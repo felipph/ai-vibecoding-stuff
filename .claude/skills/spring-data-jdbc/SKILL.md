@@ -148,6 +148,69 @@ public interface ProductRepository extends ListCrudRepository<ProductEntity, Lon
 
 **Asset:** `assets/custom-repository.java` — Complete pattern
 
+### Abstract Base Class (Recommended for Custom Repositories)
+
+For custom repositories with ElSql, use `AbstractElSqlRepository` to eliminate boilerplate.
+This base class automatically loads the ElSql bundle and provides utility methods.
+
+**When to use:**
+- Custom repository implementations with ElSql
+- Dynamic queries with `:IF`, `:WHERE`, and other ElSql tags
+- Need for both SQL execution and template access
+
+**Before (manual approach):**
+```java
+@Repository
+class ProductRepositoryImpl implements ProductRepositoryCustom {
+    private final ElSqlBundle bundle;
+    private final NamedParameterJdbcTemplate jdbc;
+
+    public ProductRepositoryImpl(DataSource ds) {
+        this.bundle = ElSqlBundle.of(ElSqlConfig.POSTGRES, ProductQueries.class);
+        this.jdbc = new NamedParameterJdbcTemplate(ds);
+    }
+
+    public List<ProductEntity> search(ProductSearchCriteria criteria) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+            .addValue("name", criteria.name())
+            .addValue("minPrice", criteria.minPrice());
+        SqlFragments sql = bundle.getSql("SearchProducts", params);
+        return jdbc.query(sql.getSqlString(), sql.getParameters(), productRowMapper());
+    }
+}
+```
+
+**After (with AbstractElSqlRepository):**
+```java
+@Repository
+class ProductRepositoryImpl extends AbstractElSqlRepository
+                            implements ProductRepositoryCustom {
+
+    public ProductRepositoryImpl(DataSource ds) {
+        super(ds);  // Bundle and template created automatically
+    }
+
+    public List<ProductEntity> search(ProductSearchCriteria criteria) {
+        var params = new MapSqlParameterSource()
+            .addValue("name", criteria.name())
+            .addValue("minPrice", criteria.minPrice());
+        var sql = getSqlDinamico("SearchProducts", params);
+        return namedJdbc.query(sql.getSqlString(), sql.getParameters(), productRowMapper());
+    }
+}
+```
+
+**File location convention:**
+- Repository class: `com.exemplo.repo.ProdutoRepositoryImpl`
+- ElSql file: `src/main/resources/com/exemplo/repo/ProdutoRepositoryImpl.elsql`
+
+**Important notes:**
+- Uses `ElSqlConfig.POSTGRES` dialect (LIMIT/OFFSET pagination)
+- Only `NamedParameterJdbcTemplate` is exposed (not `JdbcTemplate`)
+- Throws `IllegalArgumentException` if .elsql file is not found on classpath
+
+**Asset:** `assets/abstract-elsql-repository.java` — Complete base class with JavaDoc
+
 ### CQRS Query Service
 
 For cross-aggregate reads, reporting, and projections. **Read:** `references/cqrs-query-service.md`
@@ -336,6 +399,7 @@ private List<OrderItem> items;
 ### Available Assets
 
 All templates in `assets/`:
+- `abstract-elsql-repository.java` — Base class for custom repositories with ElSql
 - `aggregate-entity.java` — Aggregate root, value objects, cross-aggregate refs
 - `elsql-queries.elsql` — Complete `.elsql` template with all tag examples
 - `elsql-config.java` — `ElSqlBundle` bean configuration with dialect switching

@@ -1,0 +1,49 @@
+-- AbstractElSqlRepositoryTest.elsql
+-- Example .elsql file for testing AbstractElSqlRepository
+--
+-- File Location Convention:
+--   Test class: src/test/java/.../AbstractElSqlRepositoryTest.java
+--   This file:  src/test/resources/.../AbstractElSqlRepositoryTest.elsql
+--
+-- This file demonstrates various ElSql tag patterns used in the test examples.
+
+-- :name FindAll
+-- Simple SELECT without any conditional tags
+-- Used to test static SQL retrieval with getSql()
+SELECT id, name FROM test_table
+
+-- :name FindByName
+-- Dynamic query with :IF tag for optional filters
+-- Used to test dynamic SQL retrieval with getSqlDinamico()
+SELECT id, name FROM test_table
+:where
+  :and(:name, name LIKE :name)
+
+-- :name FindByStatus
+-- Dynamic query showing :IF usage for status filtering
+-- Demonstrates that :IF checks the parameter value, not presence
+SELECT id, name, status FROM test_table
+:where
+  :if(:status)
+    status = :status
+  :endif
+
+-- :name FindWithPagination
+-- Example with OFFSET/FETCH pagination (Postgres syntax)
+-- Shows how getSqlDinamico evaluates pagination parameters
+SELECT id, name FROM test_table
+ORDER BY name
+:offsetfetch
+  OFFSET :offset ROWS
+  FETCH NEXT :fetch ROWS ONLY
+
+-- :name SearchWithMultipleFilters
+-- Complex example with multiple conditional filters
+-- Demonstrates :WHERE and :AND tag usage
+SELECT id, name, status, created_at FROM test_table
+:where
+  :and(:name, name ILIKE :name)
+  :and(:status, status = :status)
+  :and(:minDate, created_at >= :minDate)
+  :and(:maxDate, created_at <= :maxDate)
+ORDER BY created_at DESC

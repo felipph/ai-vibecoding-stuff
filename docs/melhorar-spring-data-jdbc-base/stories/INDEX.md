@@ -5,10 +5,10 @@
 
 | ID | Título | Complexidade | Dependências | Status |
 |----|--------|--------------|--------------|--------|
-| US-001 | Criar AbstractElSqlRepository | Média | - | ⏳ Pending |
-| US-002 | Criar Asset de Teste | Baixa | US-001 | ⏳ Pending |
-| US-003 | Atualizar SKILL.md | Baixa | US-001 | ⏳ Pending |
-| US-004 | Substituir custom-repositories.md | Média | US-001 | ⏳ Pending |
+| US-001 | Criar AbstractElSqlRepository | Média | - | ✅ Completo |
+| US-002 | Criar Asset de Teste | Baixa | US-001 | ✅ Completo |
+| US-003 | Atualizar SKILL.md | Baixa | US-001 | ✅ Completo |
+| US-004 | Substituir custom-repositories.md | Média | US-001 | ✅ Completo |
 | US-005 | Criar Exemplo .elsql | Baixa | - | ⏳ Pending |
 
 ## Ordem de Implementação Sugerida
@@ -94,9 +94,17 @@ US-005 (Exemplo .elsql)
 ## Próximos Passos
 
 1. ✅ Histórias criadas
-2. ⏳ Aguardando aprovação das histórias
-3. ⏳ Iniciar US-001 após aprovação
+2. ✅ US-001, US-002, US-003, US-004 completadas (4/5 = 80%)
+3. ⏳ US-005 pendente
+4. ⏳ Executar commits git manualmente para todas as histórias
+
+**Histórias Restantes:**
+- US-005: Criar Exemplo .elsql (última história)
+
+**Para continuar:**
+- `/dev melhorar-spring-data-jdbc-base US-005` — Iniciar última história
+- `/status melhorar-spring-data-jdbc-base` — Ver status detalhado da sessão
 
 ---
 
-**Aprovado para iniciar desenvolvimento?** Confirmar com: `/dev melhorar-spring-data-jdbc-base US-001`
+**Progresso: 80% completo (4 de 5 histórias)**
