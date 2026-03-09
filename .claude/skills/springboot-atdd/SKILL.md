@@ -51,27 +51,44 @@ Each acceptance criterion becomes one or more tests. Use **behavior-focused nami
 
 ```java
 @Test
+@DisplayName("[+] with valid email - sends reset link")
 void requestPasswordReset_withValidEmail_sendsResetLink() {
     // Test for: [+] If email is valid and registered, system sends reset link
 }
 
 @Test
+@DisplayName("[-] with unregistered email - throws exception")
 void requestPasswordReset_withUnregisteredEmail_throwsException() {
     // Test for: [-] If email is invalid or not registered, system displays error
 }
 
 @Test
+@DisplayName("[+] with valid token - updates password and marks token used")
 void resetPasswordWithToken_withValidToken_updatesPasswordAndMarksTokenUsed() {
     // Test for: [+] If password is valid and confirmation matches, system saves it
 }
 
 @Test
+@DisplayName("[-] with invalid token - throws exception")
 void resetPasswordWithToken_withInvalidToken_throwsException() {
     // Test for: [-] If token is expired or invalid, system displays error
 }
 ```
 
-**Naming convention:** `methodName_scenario_expectedResult`
+**Naming convention (REQUIRED):** `methodName_scenario_expectedResult`
+
+```java
+// Pattern: methodName_scenario_expectedResult
+void resetPassword_withValidToken_updatesPasswordAndMarksTokenUsed()
+void resetPassword_withExpiredToken_throwsException()
+void requestPasswordReset_withUnregisteredEmail_returnsGenericMessage()
+
+// AVOID these patterns:
+// ❌ shouldDoSomethingWhenCondition() — less precise
+// ❌ testSomething() — outdated JUnit 4 style
+```
+
+**@DisplayName pattern:** Use `[+]` for happy path, `[-]` for error cases to map tests to acceptance criteria
 
 ### Step 3: Write Minimum Code to Pass
 
@@ -87,60 +104,111 @@ Once tests pass, improve structure while keeping them green.
 
 Good tests in Spring Boot follow FIRST:
 
-- **F — Fast**: Use in-memory databases, mocks for external services
+- **F — Fast**: Use in-memory databases, mocks for external services, `@BeforeAll` for one-time setup
 - **I — Independent**: Each test is self-contained, no shared state
 - **R — Repeatable**: Same results every time, no date/time randomness
 - **S — Self-validating**: Tests pass/fail automatically, no manual inspection
 - **T — Timely**: Write tests BEFORE implementation code
 
+### Choosing the Right Test Slice
+
+```
+What are you testing?
+│
+├─ Model validation constraints (email, not null, size)?
+│   └─ Validator test (no Spring context) — FASTEST
+│
+├─ Service business logic (calculations, rules)?
+│   └─ @ExtendWith(MockitoExtension.class) — FAST
+│
+├─ REST controller endpoints (HTTP, JSON)?
+│   └─ @WebMvcTest(YourController.class) — MODERATE
+│
+├─ Repository queries (JPQL, native SQL)?
+│   └─ @DataJpaTest + @Testcontainers — SLOWER
+│
+└─ Full integration (multiple layers)?
+    └─ @SpringBootTest + @Testcontainers — SLOWEST
+```
+
 ### 1. Bean Validation Testing
 
-Test model constraints using `javax.validation.Validator`:
+Test model constraints using `jakarta.validation.Validator` **without Spring context** (FASTEST):
 
 ```java
-class ExperienceTest {
+@DisplayName("Order Bean Validation Tests")
+class OrderTest {
 
     private static Validator validator;
 
     @BeforeAll
     static void setupValidator() {
+        // One-time setup - FAST (FIRST principle)
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @Test
-    void testCompanyEmpty() {
-        User user = createUser();
-
-        Experience experience = Experience.builder()
-                .title("Software Engineer")
-                .company("") // Empty company name
-                .startDate(LocalDate.of(2020, 5, 1))
-                .user(user)
+    @DisplayName("[-] should reject order with empty items")
+    void orderWithEmptyItems_shouldBeInvalid() {
+        // Arrange - Acceptance: [-] Order with empty items is rejected
+        Order order = Order.builder()
+                .items(new ArrayList<>())
+                .totalAmount(BigDecimal.valueOf(100.00))
+                .customerEmail("customer@example.com")
+                .orderDate(LocalDate.now())
                 .build();
 
-        Set<ConstraintViolation<Experience>> violations = validator.validate(experience);
+        // Act
+        Set<ConstraintViolation<Order>> violations = validator.validate(order);
 
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream()
-                .anyMatch(v -> v.getMessage().contains("Company is required")));
+        // Assert
+        assertThat(violations).isNotEmpty();
+        assertThat(violations).anyMatch(v ->
+                v.getMessage().equals("Order items cannot be empty"));
     }
 
-    private User createUser() {
-        return User.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .email("john@example.com")
+    // Helper method - creates valid test fixture
+    private Order.Builder createValidOrderBuilder() {
+        return Order.builder()
+                .items(List.of(createValidOrderItem()))
+                .totalAmount(BigDecimal.valueOf(100.00))
+                .customerEmail("customer@example.com")
+                .orderDate(LocalDate.now());
+    }
+
+    private OrderItem createValidOrderItem() {
+        return OrderItem.builder()
+                .productName("Test Product")
+                .quantity(1)
+                .unitPrice(BigDecimal.TEN)
                 .build();
     }
 }
 ```
 
-**Key patterns:**
-- Use `Validator` directly instead of loading Spring context
-- Create test fixtures (`createUser()`) for readability
-- Test both constraint existence and message content
-- Use `@Nested` classes to group related tests
+**Key patterns (FIRST - Fast):**
+- ✅ Use `@BeforeAll static` for Validator setup (one-time, not per-test)
+- ✅ Use `Validator` directly — **no Spring context needed**
+- ✅ Create test fixtures (`createValidOrderBuilder()`) for readability
+- ✅ Use `@Nested` classes to group related tests by field/concern
+- ✅ Use AssertJ `assertThat()` instead of JUnit `assertTrue/assertFalse`
+
+```java
+// WRONG: @BeforeEach creates Validator for EVERY test (slow)
+@BeforeEach
+void setUp() {
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    validator = factory.getValidator();  // Repeated 20+ times!
+}
+
+// RIGHT: @BeforeAll creates Validator ONCE (fast)
+@BeforeAll
+static void setupValidator() {
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    validator = factory.getValidator();  // Created once, reused
+}
+```
 
 ### 2. Service Layer Testing with Mockito
 
