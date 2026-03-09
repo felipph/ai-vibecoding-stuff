@@ -1,0 +1,239 @@
+-- ============================================================================
+-- Example Repository - ElSql Bundle
+-- ============================================================================
+--
+-- CONVENÇÃO DE LOCALIZAÇÃO:
+--
+-- Para um repository em: com.exemplo.repo.ProdutoRepositoryImpl
+-- O arquivo ElSql deve estar em: src/main/resources/com/exemplo/repo/ProdutoRepositoryImpl.elsql
+--
+-- O AbstractElSqlRepository carrega automaticamente o bundle baseado no pacote da classe.
+--
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Query 1: SELECT Simples (Estático)
+-- ----------------------------------------------------------------------------
+-- Objetivo: Buscar todos os produtos ativos
+-- Tags usadas: :name (define o nome da query)
+--
+-- Uso no Java:
+--   getElSql().getSql("findAllActive", Map.of())
+-- ----------------------------------------------------------------------------
+
+SELECT * FROM products WHERE status = 'ACTIVE'
+
+@@findAllActive
+-- Resultado: SELECT * FROM products WHERE status = 'ACTIVE'
+
+
+-- ----------------------------------------------------------------------------
+-- Query 2: SELECT com :IF (Condicional Simples)
+-- ----------------------------------------------------------------------------
+-- Objetivo: Buscar produtos filtrando opcionalmente por categoria
+-- Tags usadas: :IF (condicional), :name (nome da query)
+--
+-- Uso no Java:
+--   getElSql().getSql("findByCategory",
+--     Map.of("includeCategory", true, "categoryId", 5))
+-- ----------------------------------------------------------------------------
+
+SELECT *
+FROM products
+WHERE 1=1
+
+  -- :IF inclui a cláusula WHERE quando o parâmetro é true
+  @IF{includeCategory}
+    AND category_id = :categoryId
+  @ENDIF
+
+@@findByCategory
+
+
+-- ----------------------------------------------------------------------------
+-- Query 3: SELECT com :WHERE e :AND (Multi-Condições)
+-- ----------------------------------------------------------------------------
+-- Objetivo: Buscar produtos com múltiplos filtros opcionais
+-- Tags usadas: :WHERE (inicia cláusula WHERE dinâmica), :AND (adiciona AND)
+--
+-- Uso no Java:
+--   getElSql().getSql("searchProducts",
+--     Map.of(
+--       "minPrice", 100.0,
+--       "maxPrice", 500.0,
+--       "search", "laptop"
+--     ))
+-- ----------------------------------------------------------------------------
+
+SELECT *
+FROM products
+
+  -- :WHERE cria cláusula WHERE apenas se houver condições
+  -- Cada @AND adiciona uma condição separada por AND
+  @WHERE{minPrice != null}
+    @AND price >= :minPrice
+  @END
+
+  @WHERE{maxPrice != null}
+    @AND price <= :maxPrice
+  @END
+
+  @WHERE{search != null && !search.isEmpty()}
+    @AND (name LIKE CONCAT('%', :search, '%')
+          OR description LIKE CONCAT('%', :search, '%'))
+  @END
+
+ORDER BY name ASC
+
+@@searchProducts
+
+
+-- ----------------------------------------------------------------------------
+-- Query 4: SELECT com Paginação (:OFFSET e :FETCH)
+-- ----------------------------------------------------------------------------
+-- Objetivo: Buscar produtos com paginação
+-- Tags usadas: :OFFSET (pula N registros), :FETCH (limita a M registros)
+--
+-- Uso no Java:
+--   getElSql().getSql("findPaginated",
+--     Map.of("offset", 20, "limit", 10))
+-- ----------------------------------------------------------------------------
+
+SELECT *
+FROM products
+ORDER BY created_at DESC
+
+-- :OFFSET pula os primeiros N registros (útil para página 2, 3, etc.)
+@OFFSET{offset}
+
+-- :FETCH limita o número de resultados retornados
+@FETCH{limit}
+
+@@findPaginated
+
+
+-- ============================================================================
+-- CASOS DE BORDA
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- Caso de Borda 1: Múltiplas Condições :IF Aninhadas
+-- ----------------------------------------------------------------------------
+-- Objetivo: Query com lógica condicional complexa
+--
+-- Uso no Java:
+--   getElSql().getSql("findComplex",
+--     Map.of(
+--       "hasCategoryFilter", true,
+--       "categoryId", 3,
+--       "hasPriceFilter", true,
+--       "minPrice", 50.0
+--     ))
+-- ----------------------------------------------------------------------------
+
+SELECT *
+FROM products
+WHERE status = 'ACTIVE'
+
+  -- Primeiro nível: filtro de categoria
+  @IF{hasCategoryFilter}
+    AND category_id = :categoryId
+  @ENDIF
+
+  -- Segundo nível: filtro de preço (pode combinar com o anterior)
+  @IF{hasPriceFilter}
+    AND price >= :minPrice
+    @IF{hasMaxPrice}
+      AND price <= :maxPrice
+    @ENDIF
+  @ENDIF
+
+  -- Terceiro nível: filtro de data
+  @IF{hasDateFilter}
+    AND created_at >= :startDate
+    @IF{hasEndDate}
+      AND created_at <= :endDate
+    @ENDIF
+  @ENDIF
+
+ORDER BY name
+
+@@findComplex
+
+
+-- ----------------------------------------------------------------------------
+-- Caso de Borda 2: LIKE com Parâmetros
+-- ----------------------------------------------------------------------------
+-- Objetivo: Busca textual com múltiplos campos
+--
+-- Uso no Java:
+--   getElSql().getSql("searchByText",
+--     Map.of("query", "smartphone"))
+-- ----------------------------------------------------------------------------
+
+SELECT *
+FROM products
+
+@WHERE{query != null && !query.isEmpty()}
+  @AND (name LIKE CONCAT('%', :query, '%')
+        OR description LIKE CONCAT('%', :query, '%')
+        OR sku LIKE CONCAT(:query, '%'))
+@END
+
+ORDER BY
+  CASE
+    WHEN name LIKE CONCAT(:query, '%') THEN 1
+    WHEN name LIKE CONCAT('%', :query, '%') THEN 2
+    ELSE 3
+  END
+
+@@searchByText
+
+
+-- ----------------------------------------------------------------------------
+-- Caso de Borda 3: JOIN entre Tabelas
+-- ----------------------------------------------------------------------------
+-- Objetivo: Query com JOIN para buscar dados relacionados
+--
+-- Uso no Java:
+--   getElSql().getSql("findWithCategory",
+--     Map.of("categorySlug", "electronics"))
+-- ----------------------------------------------------------------------------
+
+SELECT
+  p.id,
+  p.name,
+  p.price,
+  p.sku,
+  c.name AS category_name,
+  c.slug AS category_slug
+FROM products p
+INNER JOIN categories c ON p.category_id = c.id
+
+@WHERE{categorySlug != null}
+  AND c.slug = :categorySlug
+@END
+
+@WHERE{activeOnly}
+  AND p.status = 'ACTIVE'
+  AND c.status = 'ACTIVE'
+@END
+
+ORDER BY c.name, p.name
+
+@@findWithCategory
+
+
+-- ============================================================================
+-- DICAS DE BOAS PRÁTICAS
+-- ============================================================================
+--
+-- 1. Use :IF para condições booleanas simples (true/false)
+-- 2. Use :WHERE/:AND para filtros opcionais baseados em valores não-nulos
+-- 3. Sempre use @OFFSET/@FETCH para paginação (evite LIMIT/OFFSET direto)
+-- 4. Mantenha queries organizadas com seções e comentários
+-- 5. Use nomes descritivos para as queries (ex: "findByCategory" não "query1")
+-- 6. Teste queries com diferentes combinações de parâmetros
+-- 7. Use JOIN apenas quando necessário (preferir multiple queries para datasets grandes)
+--
+-- ============================================================================
