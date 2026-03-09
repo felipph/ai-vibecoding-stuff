@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-3-bean-validation-with_skill",
+  "eval_id": 3,
+  "eval_name": "bean-validation-testing",
+  "configuration": "with_skill",
+  "expectations": [
+    {"text": "Uses javax.validation.Validator directly without Spring context", "passed": true, "evidence": "ValidatorFactory factory = Validation.buildDefaultValidatorFactory()"},
+    {"text": "Creates reusable test fixtures/factory methods for test data", "passed": true, "evidence": "createValidOrderBuilder() and createValidOrderItem() methods"},
+    {"text": "Tests each validation constraint independently", "passed": true, "evidence": "@Nested classes for OrderItemsValidation, TotalAmountValidation, etc."},
+    {"text": "Verifies both constraint violation presence and error messages", "passed": true, "evidence": "assertThat(violations).isNotEmpty() and message checks"},
+    {"text": "Uses @Nested classes to group related constraint tests", "passed": true, "evidence": "@Nested @DisplayName classes for each validation concern"}
+  ],
+  "overall_pass": true
+}

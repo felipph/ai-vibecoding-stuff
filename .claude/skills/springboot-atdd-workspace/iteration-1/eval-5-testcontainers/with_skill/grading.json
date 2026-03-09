@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-5-testcontainers-with_skill",
+  "eval_id": 5,
+  "eval_name": "testcontainers-setup",
+  "configuration": "with_skill",
+  "expectations": [
+    {"text": "Uses @DataJpaTest with @Testcontainers annotations", "passed": true, "evidence": "@DataJpaTest @Testcontainers present in UserRepositoryTest"},
+    {"text": "Configures PostgreSQLContainer with proper image", "passed": true, "evidence": "@Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(\"postgres:16-alpine\")"},
+    {"text": "Uses @DynamicPropertySource to configure datasource", "passed": true, "evidence": "@DynamicPropertySource static void configureProperties(DynamicPropertyRegistry registry)"},
+    {"text": "Tests query with different criteria combinations", "passed": true, "evidence": "Multiple test methods for different search scenarios"},
+    {"text": "Uses AssertJ assertions for verification", "passed": true, "evidence": "assertThat(found).isPresent() and similar assertions"}
+  ],
+  "overall_pass": true
+}

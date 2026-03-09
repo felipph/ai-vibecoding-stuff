@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-2-webmvctest-endpoint-without_skill",
+  "eval_id": 2,
+  "eval_name": "webmvctest-endpoint",
+  "configuration": "without_skill",
+  "expectations": [
+    {"text": "Uses @WebMvcTest annotation for controller testing", "passed": true, "evidence": "@WebMvcTest(ProductController.class) present"},
+    {"text": "Uses @MockBean or @MockitoBean for mocking service layer", "passed": true, "evidence": "@MockBean private ProductService productService"},
+    {"text": "Tests successful price update scenario with 200 OK", "passed": true, "evidence": "18 test cases including success scenarios"},
+    {"text": "Tests failure scenarios (product not found, invalid price)", "passed": true, "evidence": "Tests for validation failures and not found cases"},
+    {"text": "Verifies HTTP status codes and response body using jsonPath", "passed": true, "evidence": "Uses MockMvc with status() and jsonPath() assertions"}
+  ],
+  "overall_pass": true
+}

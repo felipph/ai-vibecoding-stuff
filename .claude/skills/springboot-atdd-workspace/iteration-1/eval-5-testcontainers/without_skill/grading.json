@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-5-testcontainers-without_skill",
+  "eval_id": 5,
+  "eval_name": "testcontainers-setup",
+  "configuration": "without_skill",
+  "expectations": [
+    {"text": "Uses @DataJpaTest with @Testcontainers annotations", "passed": true, "evidence": "@DataJpaTest and @Testcontainers present"},
+    {"text": "Configures PostgreSQLContainer with proper image", "passed": true, "evidence": "PostgreSQL 16 Alpine container configured"},
+    {"text": "Uses @DynamicPropertySource to configure datasource", "passed": false, "evidence": "Uses @ServiceConnection instead (Spring Boot 4 style)"},
+    {"text": "Tests query with different criteria combinations", "passed": true, "evidence": "30+ test methods covering various scenarios"},
+    {"text": "Uses AssertJ assertions for verification", "passed": true, "evidence": "AssertJ assertions used throughout"}
+  ],
+  "overall_pass": true
+}

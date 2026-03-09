@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-4-password-reset-without_skill",
+  "eval_id": 4,
+  "eval_name": "password-reset-atdd",
+  "configuration": "without_skill",
+  "expectations": [
+    {"text": "Each test maps directly to an acceptance criterion", "passed": true, "evidence": "Tests organized by acceptance criteria"},
+    {"text": "Test names follow method_scenario_expectedResult pattern", "passed": false, "evidence": "Uses should_expectedBehavior_when_condition pattern instead"},
+    {"text": "Uses @ExtendWith(MockitoExtension.class) for service tests", "passed": true, "evidence": "Mockito extension used"},
+    {"text": "Uses assertThatThrownBy for exception testing", "passed": true, "evidence": "Exception testing present"},
+    {"text": "Covers all 6 acceptance criteria with tests", "passed": true, "evidence": "15 test cases covering all scenarios"}
+  ],
+  "overall_pass": true
+}

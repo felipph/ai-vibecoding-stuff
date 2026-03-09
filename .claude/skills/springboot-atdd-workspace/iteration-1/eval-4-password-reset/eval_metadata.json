@@ -1,0 +1,32 @@
+{
+  "eval_id": 4,
+  "eval_name": "password-reset-atdd",
+  "prompt": "I need to implement a password reset feature. Here are the acceptance criteria:\n\n[+] User can request password reset with registered email\n[-] If email is not registered, show generic success message (security)\n[+] System sends reset token valid for 1 hour\n[+] User can reset password with valid token\n[-] Expired tokens are rejected\n[-] Used tokens cannot be reused\n\nHelp me implement this using TDD with proper test naming and structure.",
+  "assertions": [
+    {
+      "name": "maps_tests_to_criteria",
+      "description": "Each test maps directly to an acceptance criterion",
+      "expected": true
+    },
+    {
+      "name": "behavior_focused_naming",
+      "description": "Test names follow method_scenario_expectedResult pattern",
+      "expected": true
+    },
+    {
+      "name": "uses_mockito_extension",
+      "description": "Uses @ExtendWith(MockitoExtension.class) for service tests",
+      "expected": true
+    },
+    {
+      "name": "uses_assertj_exception_testing",
+      "description": "Uses assertThatThrownBy for exception testing",
+      "expected": true
+    },
+    {
+      "name": "covers_all_criteria",
+      "description": "Covers all 6 acceptance criteria with tests",
+      "expected": true
+    }
+  ]
+}

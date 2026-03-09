@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "webmvctest-endpoint",
+  "prompt": "I have a Spring Boot REST controller for managing products. I need to add an endpoint to update product prices. The price must be positive and the product must exist. Write tests for this endpoint using @WebMvcTest.",
+  "assertions": [
+    {
+      "name": "uses_webmvctest_annotation",
+      "description": "Uses @WebMvcTest annotation for controller testing",
+      "expected": true
+    },
+    {
+      "name": "uses_mockbean_for_service",
+      "description": "Uses @MockBean or @MockitoBean for mocking service layer",
+      "expected": true
+    },
+    {
+      "name": "tests_success_scenario",
+      "description": "Tests successful price update scenario with 200 OK",
+      "expected": true
+    },
+    {
+      "name": "tests_failure_scenarios",
+      "description": "Tests failure scenarios (product not found, invalid price)",
+      "expected": true
+    },
+    {
+      "name": "verifies_http_status_and_body",
+      "description": "Verifies HTTP status codes and response body using jsonPath",
+      "expected": true
+    }
+  ]
+}

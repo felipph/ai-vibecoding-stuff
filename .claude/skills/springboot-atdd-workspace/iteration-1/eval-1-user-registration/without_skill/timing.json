@@ -1,0 +1,7 @@
+{
+  "total_tokens": 79,
+  "tool_uses": 5,
+  "duration_ms": 221417,
+  "total_duration_seconds": 221.4,
+  "error": "Rate limit reached - incomplete"
+}

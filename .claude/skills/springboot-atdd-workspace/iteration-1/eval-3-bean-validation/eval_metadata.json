@@ -1,0 +1,32 @@
+{
+  "eval_id": 3,
+  "eval_name": "bean-validation-testing",
+  "prompt": "My Spring Boot application has an Order entity with validation constraints. I need to test that:\n- Order items cannot be empty\n- Total amount must be positive\n- Customer email is required and valid\n- Order date cannot be in the future\n\nHow do I test these Bean Validation constraints?",
+  "assertions": [
+    {
+      "name": "uses_validator_directly",
+      "description": "Uses javax.validation.Validator directly without Spring context",
+      "expected": true
+    },
+    {
+      "name": "creates_test_fixtures",
+      "description": "Creates reusable test fixtures/factory methods for test data",
+      "expected": true
+    },
+    {
+      "name": "tests_each_constraint_independently",
+      "description": "Tests each validation constraint independently",
+      "expected": true
+    },
+    {
+      "name": "verifies_error_messages",
+      "description": "Verifies both constraint violation presence and error messages",
+      "expected": true
+    },
+    {
+      "name": "uses_nested_classes",
+      "description": "Uses @Nested classes to group related constraint tests",
+      "expected": true
+    }
+  ]
+}

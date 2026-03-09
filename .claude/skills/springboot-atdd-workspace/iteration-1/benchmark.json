@@ -1,0 +1,147 @@
+{
+  "skill_name": "springboot-atdd",
+  "iteration": 1,
+  "timestamp": "2026-03-09T16:15:00Z",
+  "evaluations": [
+    {
+      "eval_id": 1,
+      "eval_name": "user-registration-atdd",
+      "configurations": [
+        {
+          "name": "with_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 653.8,
+          "total_tokens": 2659,
+          "tool_uses": 29
+        },
+        {
+          "name": "without_skill",
+          "pass_rate": 0.0,
+          "passed_assertions": 0,
+          "total_assertions": 5,
+          "duration_seconds": 221.4,
+          "total_tokens": 79,
+          "tool_uses": 5,
+          "error": "Rate limit reached - incomplete"
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "webmvctest-endpoint",
+      "configurations": [
+        {
+          "name": "with_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 125.6,
+          "total_tokens": 2800,
+          "tool_uses": 10
+        },
+        {
+          "name": "without_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 342.6,
+          "total_tokens": 20968,
+          "tool_uses": 19
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "bean-validation-testing",
+      "configurations": [
+        {
+          "name": "with_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 509.2,
+          "total_tokens": 1554,
+          "tool_uses": 10
+        },
+        {
+          "name": "without_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 787.8,
+          "total_tokens": 1058,
+          "tool_uses": 17
+        }
+      ]
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "password-reset-atdd",
+      "configurations": [
+        {
+          "name": "with_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 436.8,
+          "total_tokens": 4377,
+          "tool_uses": 22
+        },
+        {
+          "name": "without_skill",
+          "pass_rate": 80.0,
+          "passed_assertions": 4,
+          "total_assertions": 5,
+          "duration_seconds": 812.3,
+          "total_tokens": 2846,
+          "tool_uses": 31
+        }
+      ]
+    },
+    {
+      "eval_id": 5,
+      "eval_name": "testcontainers-setup",
+      "configurations": [
+        {
+          "name": "with_skill",
+          "pass_rate": 100.0,
+          "passed_assertions": 5,
+          "total_assertions": 5,
+          "duration_seconds": 353.0,
+          "total_tokens": 5641,
+          "tool_uses": 17
+        },
+        {
+          "name": "without_skill",
+          "pass_rate": 80.0,
+          "passed_assertions": 4,
+          "total_assertions": 5,
+          "duration_seconds": 368.2,
+          "total_tokens": 272,
+          "tool_uses": 20
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "with_skill": {
+      "mean_pass_rate": 100.0,
+      "std_pass_rate": 0.0,
+      "mean_duration_seconds": 415.7,
+      "mean_tokens": 3406.2
+    },
+    "without_skill": {
+      "mean_pass_rate": 72.0,
+      "std_pass_rate": 40.0,
+      "mean_duration_seconds": 506.5,
+      "mean_tokens": 5044.6
+    },
+    "delta": {
+      "pass_rate_improvement": 28.0,
+      "duration_improvement_seconds": -90.8,
+      "token_improvement": -1638.4
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "eval_id": 5,
+  "eval_name": "testcontainers-setup",
+  "prompt": "I have a complex JPQL query in my UserRepository that finds users by multiple criteria (name, email, status, registration date range). I want to test this query works correctly with a real PostgreSQL database. How should I set this up?",
+  "assertions": [
+    {
+      "name": "uses_datajpatest_testcontainers",
+      "description": "Uses @DataJpaTest with @Testcontainers annotations",
+      "expected": true
+    },
+    {
+      "name": "configures_postgres_container",
+      "description": "Configures PostgreSQLContainer with proper image",
+      "expected": true
+    },
+    {
+      "name": "uses_dynamic_property_source",
+      "description": "Uses @DynamicPropertySource to configure datasource",
+      "expected": true
+    },
+    {
+      "name": "tests_multiple_scenarios",
+      "description": "Tests query with different criteria combinations",
+      "expected": true
+    },
+    {
+      "name": "uses_assertj",
+      "description": "Uses AssertJ assertions for verification",
+      "expected": true
+    }
+  ]
+}

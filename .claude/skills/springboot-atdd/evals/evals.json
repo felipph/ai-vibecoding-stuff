@@ -1,0 +1,35 @@
+{
+  "skill_name": "springboot-atdd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to implement a user registration feature for my Spring Boot application. The business requirements are:\n\n1. Users must register with email and password\n2. Email must be valid and unique\n3. Password must be at least 8 characters with at least one uppercase, one lowercase, and one number\n4. After successful registration, send a welcome email\n5. If email already exists, return an error\n\nHelp me write tests and implement this following ATDD principles.",
+      "expected_output": "Define acceptance criteria in [+] and [-] format, write tests using appropriate Spring Boot test patterns (Bean Validation, Mockito for service layer), use AssertJ fluent assertions, follow Arrange-Act-Assert pattern",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I have a Spring Boot REST controller for managing products. I need to add an endpoint to update product prices. The price must be positive and the product must exist. Write tests for this endpoint using @WebMvcTest.",
+      "expected_output": "Use @WebMvcTest with MockMvc, test both success and failure scenarios (product not found, invalid price), use MockBean for service layer, verify HTTP status codes and response body",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "My Spring Boot application has an Order entity with validation constraints. I need to test that:\n- Order items cannot be empty\n- Total amount must be positive\n- Customer email is required and valid\n- Order date cannot be in the future\n\nHow do I test these Bean Validation constraints?",
+      "expected_output": "Use javax.validation.Validator directly without Spring context, create test fixtures, test each constraint independently, verify both constraint presence and error messages",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I need to implement a password reset feature. Here are the acceptance criteria:\n\n[+] User can request password reset with registered email\n[-] If email is not registered, show generic success message (security)\n[+] System sends reset token valid for 1 hour\n[+] User can reset password with valid token\n[-] Expired tokens are rejected\n[-] Used tokens cannot be reused\n\nHelp me implement this using TDD with proper test naming and structure.",
+      "expected_output": "Define tests from acceptance criteria, use behavior-focused naming (method_scenario_expectedResult), follow Arrange-Act-Assert, use Mockito for service tests, use AssertJ assertThatThrownBy for exception testing",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "I have a complex JPQL query in my UserRepository that finds users by multiple criteria (name, email, status, registration date range). I want to test this query works correctly with a real PostgreSQL database. How should I set this up?",
+      "expected_output": "Recommend @DataJpaTest with @Testcontainers, PostgreSQLContainer configuration, @DynamicPropertySource for datasource config, test with realistic data, verify query results for different scenarios",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-3-bean-validation-without_skill",
+  "eval_id": 3,
+  "eval_name": "bean-validation-testing",
+  "configuration": "without_skill",
+  "expectations": [
+    {"text": "Uses javax.validation.Validator directly without Spring context", "passed": true, "evidence": "ValidatorFactory used in OrderValidationTest"},
+    {"text": "Creates reusable test fixtures/factory methods for test data", "passed": true, "evidence": "Builder pattern and helper methods present"},
+    {"text": "Tests each validation constraint independently", "passed": true, "evidence": "40+ test cases covering all constraints"},
+    {"text": "Verifies both constraint violation presence and error messages", "passed": true, "evidence": "Tests verify violation messages"},
+    {"text": "Uses @Nested classes to group related constraint tests", "passed": true, "evidence": "Nested test classes for organization"}
+  ],
+  "overall_pass": true
+}

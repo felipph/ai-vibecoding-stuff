@@ -1,0 +1,14 @@
+{
+  "run_id": "eval-4-password-reset-with_skill",
+  "eval_id": 4,
+  "eval_name": "password-reset-atdd",
+  "configuration": "with_skill",
+  "expectations": [
+    {"text": "Each test maps directly to an acceptance criterion", "passed": true, "evidence": "Acceptance criteria documented and tests map to them"},
+    {"text": "Test names follow method_scenario_expectedResult pattern", "passed": true, "evidence": "resetPasswordWithToken_withValidToken_updatesPasswordAndMarksTokenUsed"},
+    {"text": "Uses @ExtendWith(MockitoExtension.class) for service tests", "passed": true, "evidence": "@ExtendWith(MockitoExtension.class) present in PasswordResetServiceTest"},
+    {"text": "Uses assertThatThrownBy for exception testing", "passed": true, "evidence": "assertThatThrownBy(() -> service.resetPassword(...)) used"},
+    {"text": "Covers all 6 acceptance criteria with tests", "passed": true, "evidence": "Tests for all criteria: valid email, unregistered, valid token, expired, used"}
+  ],
+  "overall_pass": true
+}

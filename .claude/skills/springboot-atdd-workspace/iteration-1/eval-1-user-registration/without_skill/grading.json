@@ -1,0 +1,15 @@
+{
+  "run_id": "eval-1-user-registration-without_skill",
+  "eval_id": 1,
+  "eval_name": "user-registration-atdd",
+  "configuration": "without_skill",
+  "expectations": [
+    {"text": "Defines acceptance criteria using [+] and [-] format", "passed": false, "evidence": "Rate limit error - incomplete run"},
+    {"text": "Tests follow Arrange-Act-Assert pattern with clear comments", "passed": false, "evidence": "Rate limit error - incomplete run"},
+    {"text": "Uses AssertJ fluent assertions (assertThat) instead of JUnit assertions", "passed": false, "evidence": "Rate limit error - incomplete run"},
+    {"text": "Test method names follow method_scenario_expectedResult pattern", "passed": false, "evidence": "Rate limit error - incomplete run"},
+    {"text": "Tests cover both positive (happy path) and negative (error) scenarios", "passed": false, "evidence": "Rate limit error - incomplete run"}
+  ],
+  "overall_pass": false,
+  "error": "Rate limit reached - incomplete"
+}
