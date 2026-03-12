@@ -1,6 +1,10 @@
 # /dev — Iniciar Desenvolvimento de uma História
 
 Executa a Fase 4: implementa uma história de usuário de forma incremental.
+O usuário pode habilitar o modo autônomo para que o assistente tome decisões sem pedir permissão. O comando chave é "go god mode".
+
+Caso você esteja com problemas para resolver um problema e demore mais do que 3 interações tentando resolver, chame o usuário para ajudar.
+
 
 ## Como usar
 ```
@@ -20,7 +24,7 @@ a mais adequada com base em:
 **Apresente a sugestão e aguarde confirmação do usuário.**
 
 ### 2. Criar Branch de Trabalho
-> 🔐 Solicite permissão antes de executar
+> 🔐 Solicite permissão antes de executar a menos que o usuário explicitamente diga que não precisa!
 
 ```bash
 git checkout -b feature/US-<NNN>-<slug>
@@ -52,7 +56,7 @@ Para cada mecanismo autocontido (classe, módulo, serviço, endpoint):
 - Mantenha o escopo restrito ao mecanismo atual
 
 #### 4b. Verificar Compilação
-> 🔐 Solicite permissão antes de executar
+
 ```bash
 <build-command>
 ```
@@ -64,7 +68,7 @@ Para cada mecanismo autocontido (classe, módulo, serviço, endpoint):
 - Meta: ≥ 80% de cobertura no módulo
 
 #### 4d. Rodar Testes do Módulo
-> 🔐 Solicite permissão antes de executar
+
 ```bash
 <test-command> <caminho-do-modulo> --coverage
 ```

@@ -31,7 +31,6 @@ Ask:
 | Pattern | When | Read |
 |---------|------|------|
 | **Simple Repository** | Basic CRUD, 1-2 fixed queries | - |
-| **@Query Repository** | Few fixed SQL queries, no dynamics | `references/query-patterns.md` |
 | **ElSql Repository** | Dynamic filtering, reusable SQL blocks | `references/query-patterns.md` |
 | **Custom Repository** | Bulk ops, complex dynamic SQL | `references/custom-repositories.md` |
 | **CQRS Query Service** | Cross-aggregate reads, reporting, projections | `references/cqrs-query-service.md` |
@@ -399,7 +398,6 @@ private List<OrderItem> items;
 ### Available Assets
 
 All templates in `assets/`:
-- `abstract-elsql-repository.java` — Base class for custom repositories with ElSql
 - `aggregate-entity.java` — Aggregate root, value objects, cross-aggregate refs
 - `elsql-queries.elsql` — Complete `.elsql` template with all tag examples
 - `elsql-config.java` — `ElSqlBundle` bean configuration with dialect switching
